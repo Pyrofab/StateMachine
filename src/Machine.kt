@@ -37,8 +37,8 @@ class Machine(var heap: MutableMap<String, Any> = mutableMapOf(), var stack: Deq
     var i2 = stack.pop()
     if(i1 is String) i1 = i1.toIntOrNull() ?: i1
     if(i2 is String) i2 = i2.toIntOrNull() ?: i2
-    if(i1 is String && i2 is String)
-      stack.push(i1 + i2)
+    if(i1 is String || i2 is String)
+      stack.push("$i1$i2")
     else if (i1 is Int && i2 is Int)
       stack.push(i1 + i2)
     else if (i1 is Number && i2 is Number)
