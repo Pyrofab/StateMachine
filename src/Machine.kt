@@ -15,6 +15,8 @@ class Machine(var heap: MutableMap<String, Any> = mutableMapOf(), var stack: Deq
     return pointer
   }
 
+  fun pop() = stack.pop()
+
   fun pop(varName: String) {
     heap[varName] = stack.pop()
   }
