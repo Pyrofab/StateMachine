@@ -1,6 +1,12 @@
+package statemachine
+
+import statemachine.states.State
 import java.nio.file.Files
 import java.nio.file.Paths
 
+/**
+ * Lit un fichier *csv* et renvoie une liste d'états correspondant à l'automate décrit dans le fichier sous forme de matrice
+ */
 fun readFile(loc: String): List<State<Char>> {
     println("Loading $loc as state machine")
     val matrix: MutableList<List<Char>> = mutableListOf()
@@ -17,6 +23,9 @@ fun readFile(loc: String): List<State<Char>> {
     return State.create(*matrix.toTypedArray())
 }
 
+/**
+ * Lit un fichier *csv* et renvoie une liste de chaînes de caractères à passer à un analyseur pour tester un automate existant
+ */
 fun readTestFile(loc: String): List<String> {
     println("Loading $loc as test file")
     val ret: MutableList<String> = mutableListOf()

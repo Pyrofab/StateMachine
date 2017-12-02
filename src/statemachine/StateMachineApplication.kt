@@ -1,3 +1,9 @@
+package statemachine
+
+import statemachine.machines.StringAnalyser
+import statemachine.states.ActionState
+import statemachine.states.ActionStateNoInput
+import statemachine.states.State
 import java.io.File
 import java.nio.file.NoSuchFileException
 import java.util.*
@@ -5,7 +11,7 @@ import java.util.*
 fun main(args: Array<String>) {
     while (true) {
         println("Enter a predefined state machine to run or \"file\" to load your own:")
-        when (readLine()) {
+        when (readLine()?.toLowerCase()) {
             "smileys" -> testSmiley()
             "hours" -> testHour()
             "mails" -> testMail()
@@ -14,7 +20,7 @@ fun main(args: Array<String>) {
             "double" -> testDoubleFinal()
             "compiler" -> testCompilerStateMachine()
             "quit" -> return
-            else -> println("Commande non définie. Les commandes valides sont \"smileys\", \"hours\", \"mails\", \"file\", \"action\", \"double\", \"quit\"")
+            else -> println("Commande non définie. Les commandes valides sont \"smileys\", \"hours\", \"mails\", \"file\", \"action\", \"double\", \"compiler\" \"quit\"")
         }
     }
 }
@@ -36,7 +42,7 @@ fun testHour() {
     m1.transitions = fillMap(mutableMapOf(), "012345", m2)
     m2.transitions = fillMap(mutableMapOf(), "0123456789", m)
     val analyseur = StringAnalyser(listOf(e0, h1, h2, h, m1, m2))
-    tests.forEach { println(analyseur.analyse(it)) }
+    tests.forEach { println("$it : ${analyseur.analyse(it)}") }
 }
 
 fun testSmiley() {
@@ -52,20 +58,20 @@ fun testSmiley() {
     e2.transitions = mapOf('-' to e3)
     e3.transitions = mapOf(')' to e4, '(' to e4)
     val analyseur = StringAnalyser(listOf(e0, e1, e2, e3, e4))
-    tests.forEach { println(analyseur.analyse(it)) }
+    tests.forEach { println("$it : ${analyseur.analyse(it)}") }
 }
 
 fun loadFile() {
-    println("========readFile=========")
+    println("========statemachine.readFile=========")
     try {
         println("Please input the name of your state machine file:")
         val analyseur = StringAnalyser(readFile("data/${readLine()}"))
-        println("State machine loaded as : $analyseur")
+        println("statemachine.states.State machine loaded as : $analyseur")
         println("Please input the name of your test file:")
         val tests = readTestFile("data/${readLine()}")
-        tests.forEach { println(analyseur.analyse(it)) }
+        tests.forEach { println("$it : ${analyseur.analyse(it)}") }
     } catch (e: NoSuchFileException) {
-        println("The provided file has not been found. Currently existing files are : ${Arrays.toString(File("data").listFiles())}")
+        println("The provided file has not been found. Currently existing files are : ${File("data").listFiles().map { it.name } }")
     }
 }
 
@@ -100,10 +106,10 @@ fun testCompilerStateMachine() {
     val e31 = ActionState<Char>("E3.1", true, op = { it.pop("var1") })
     val e4 = State<Char>("E+")
     val e5 = State<Char>("E-")
-    val e6 = ActionStateNoInput<Char>("E6", op = { it.push("var1"); it.print(); it.unbox(); it.push("var1"); it.unbox(); it.add(); it.pop("var1") })
-    val e7 = ActionStateNoInput<Char>("E7", op = { it.unbox(); it.push("var1"); it.unbox(); it.sub(); it.pop("var1") })
+    val e6 = ActionStateNoInput<Char>("E6", op = { it.unbox(); it.push("var1"); it.add(); it.pop("var1") })
+    val e7 = ActionStateNoInput<Char>("E7", op = { it.unbox(); it.push("var1"); it.sub(); it.pop("var1") })
     val e8 = ActionState<Char>("E8", true, op = { it.push("var1"); it.print() })
-    val e9 = ActionState<Char>("E9", true, op = { it.push("assigned"); it.unbox(); it.mov("var1", null); println(it.heap); })
+    val e9 = ActionState<Char>("E9", true, op = { it.push("assigned"); it.mov("var1", null); })
     e0.transitions = fillMap(mutableMapOf(), "vxy", e1)
     e1.transitions = mutableMapOf('=' to e2)
     e2.transitions = fillMap(fillMap(mutableMapOf(), "vxy", e3), "0123456789", e31)
@@ -131,7 +137,7 @@ fun testMail() {
     e1.transitions = fillMap(mutableMapOf('@' to e2), alphaNumeric, e1)
     e2.transitions = fillMap(mutableMapOf('.' to e3), alphaNumeric, e2)
     val analyseur = StringAnalyser(listOf(e0, e1, e2, e3))
-    tests.forEach { println(analyseur.analyse(it)) }
+    tests.forEach { println("$it : ${analyseur.analyse(it)}") }
 }
 
 fun fillMap(map: MutableMap<Char, State<Char>>, possibilities: String, result: State<Char>): MutableMap<Char, State<Char>> {
