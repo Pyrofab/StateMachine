@@ -1,12 +1,13 @@
 package statemachine
 
+import statemachine.machines.Analyser
+import statemachine.machines.StateMachineCompiler
 import statemachine.machines.StringAnalyser
 import statemachine.states.ActionState
 import statemachine.states.ActionStateNoInput
 import statemachine.states.State
 import java.io.File
 import java.nio.file.NoSuchFileException
-import java.util.*
 
 fun main(args: Array<String>) {
     while (true) {
@@ -18,9 +19,10 @@ fun main(args: Array<String>) {
             "file" -> loadFile()
             "action" -> testActionStateMachine()
             "double" -> testDoubleFinal()
+            "assign" -> testAssignStateMachine()
             "compiler" -> testCompilerStateMachine()
             "quit" -> return
-            else -> println("Commande non définie. Les commandes valides sont \"smileys\", \"hours\", \"mails\", \"file\", \"action\", \"double\", \"compiler\" \"quit\"")
+            else -> println("Commande non définie. Les commandes valides sont \"smileys\", \"hours\", \"mails\", \"file\", \"action\", \"double\", \"assign\", \"compiler\" \"quit\"")
         }
     }
 }
@@ -66,7 +68,7 @@ fun loadFile() {
     try {
         println("Please input the name of your state machine file:")
         val analyseur = StringAnalyser(readFile("data/${readLine()}"))
-        println("statemachine.states.State machine loaded as : $analyseur")
+        println("State machine loaded as : $analyseur")
         println("Please input the name of your test file:")
         val tests = readTestFile("data/${readLine()}")
         tests.forEach { println("$it : ${analyseur.analyse(it)}") }
@@ -97,7 +99,7 @@ fun testActionStateMachine() {
     println(analyseur.analyse("*+"))
 }
 
-fun testCompilerStateMachine() {
+fun testAssignStateMachine() {
     println("=========Assign=========")
     val e0 = State<Char>("E0")
     val e1 = ActionState<Char>("E1", op = { it.pop("assigned") })
@@ -109,7 +111,7 @@ fun testCompilerStateMachine() {
     val e6 = ActionStateNoInput<Char>("E6", op = { it.unbox(); it.push("var1"); it.add(); it.pop("var1") })
     val e7 = ActionStateNoInput<Char>("E7", op = { it.unbox(); it.push("var1"); it.sub(); it.pop("var1") })
     val e8 = ActionState<Char>("E8", true, op = { it.push("var1"); it.print() })
-    val e9 = ActionState<Char>("E9", true, op = { it.push("assigned"); it.mov("var1", null); })
+    val e9 = ActionState<Char>("E9", true, op = { it.push("assigned"); it.mov("var1", "null");  })
     e0.transitions = fillMap(mutableMapOf(), "vxy", e1)
     e1.transitions = mutableMapOf('=' to e2)
     e2.transitions = fillMap(fillMap(mutableMapOf(), "vxy", e3), "0123456789", e31)
@@ -123,6 +125,16 @@ fun testCompilerStateMachine() {
     e9.transitions = e0.transitions
     val analyseur = StringAnalyser(listOf(e0, e1, e2, e3, e4, e5, e6, e7, e8))
     while (analyseur.analyse(readLine() ?: ""));
+}
+
+fun testCompilerStateMachine() {
+    println("Please input the name of your state machine description file:")
+    val stateMachine = StateMachineCompiler.compileStateMachine("data/${readLine()}.txt") ?: return
+    val result = Analyser(stateMachine)
+    println("Entrez une chaîne de caractères à reconnaître:")
+    while (result.analyse((readLine() ?: "").split("").drop(1)))
+        result.stateMachine.log.forEach { println(it) }
+    println("L'automate n'a pas reconnu la chaîne entrée")
 }
 
 fun testMail() {

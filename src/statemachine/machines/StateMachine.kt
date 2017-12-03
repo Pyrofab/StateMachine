@@ -17,17 +17,22 @@ open class StateMachine<in T>(private val allStates: List<State<T>>,
                               private val initialState: State<in T>? = if (allStates.isEmpty()) null else allStates[0]) {
 
     companion object {
-        fun <T> from(e0: State<T>): StateMachine<T> = StateMachine(getAllChildren(e0, mutableSetOf(e0)).toList(), e0)
+        fun <T> from(e0: State<T>): StateMachine<T> = StateMachine(getAllChildren(e0, mutableSetOf(e0)).sortedBy { it.name }, e0)
 
         fun <T> getAllChildren(e0: State<T>, allStates: MutableSet<State<T>>): Set<State<T>> {
-            val unknown = e0.transitions.values - allStates
-            allStates += e0.transitions.values
+            var directChildren: Set<State<T>> = e0.transitions.values.toSet()
+            if(e0 is ActionState && e0.nextState() != null)
+                directChildren += e0.nextState()!!
+            val unknown: Set<State<T>> = directChildren - allStates
+            allStates += unknown
             unknown.forEach { getAllChildren(it, allStates) }
             return allStates
         }
     }
 
     var machine = Machine()
+        private set
+    var log = listOf<String>()
         private set
 
     private var curState: State<in T>? = initialState
@@ -45,13 +50,14 @@ open class StateMachine<in T>(private val allStates: List<State<T>>,
      * Utilise la clé passée en paramètre pour faire avancer l'automate d'un état
      */
     fun accept(next: T): Boolean {
+        machine.stack.push(next as Any)
         do {
             curState = curState?.nextState(next) ?: return false
-            machine.stack.push(next as Any)
-            println("${when(next) {"\r" -> "\\r"; "\n" -> "\\n"; " " -> "\\s"; else -> "$next "}}-> ${curState?.name}")
+            log += ("${when(next) {"\r" -> "\\r"; "\n" -> "\\n"; " " -> "\\s"; else -> "$next "}}-> ${curState?.name}")
+            println(log.last())
             if (curState is ActionState<in T>)
                 (curState as ActionState<in T>).action(machine)
-        } while (curState is ActionStateNoInput)
+        } while (curState is ActionState && (curState as ActionState<in T>).hasNoInput())
         return true
     }
 
@@ -61,6 +67,7 @@ open class StateMachine<in T>(private val allStates: List<State<T>>,
         var ret = "${toString()} {\n"
         allStates.forEach { state -> ret += "$state\n" }
         ret += "Current state: ${curState?.name}\n"
+        ret += "Virtual machine: $machine\n"
         return ret + "}"
     }
 
